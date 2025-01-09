@@ -58,12 +58,12 @@ app.post('/fetch-instagram', async (req, res) => {
     const { url } = req.body;
 
     try {
-        // Gunakan API untuk Instagram Downloader yang lebih umum
-        const apiUrl = `https://api.instagram.com/oembed?url=${encodeURIComponent(url)}`;
+        // Gunakan API InstaDownloader untuk mengambil URL video Instagram
+        const apiUrl = `https://www.instagram.com/api/v1/media/item/?url=${encodeURIComponent(url)}`;
         const response = await axios.get(apiUrl);
 
-        if (response.data && response.data.thumbnail_url) {
-            const videoUrl = response.data.thumbnail_url.replace('http://', 'https://'); // Replace with HTTPS if needed
+        if (response.data && response.data.media && response.data.media.video_url) {
+            const videoUrl = response.data.media.video_url;
             res.json({ success: true, url: videoUrl });
         } else {
             res.status(400).json({ success: false, message: 'Invalid Instagram URL or unable to fetch video.' });
