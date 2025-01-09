@@ -7,11 +7,10 @@ const path = require('path');
 const cheerio = require('cheerio'); // Untuk scraping HTML Instagram
 
 const app = express();
-const PORT = 8080; // Port yang diminta
+const PORT = 8080;
 
 // Middleware untuk meng-handle JSON request
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname)));
 
 // Serve the index.html file
 app.get('/', (req, res) => {
@@ -61,32 +60,28 @@ app.post('/fetch-instagram', async (req, res) => {
 
     try {
         // Validasi URL Instagram
-        const validInstagramUrl = /https:\/\/www.instagram.com\/(p|reel)\/[A-Za-z0-9_-]+/;
+        const validInstagramUrl = /https:\/\/www\.instagram\.com\/(p|reel|tv)\/[A-Za-z0-9_-]+/;
         if (!validInstagramUrl.test(url)) {
             return res.status(400).json({ success: false, message: 'Invalid Instagram URL.' });
         }
 
         // Mengambil halaman Instagram
-        const response = await axios.get(url);
+        const response = await axios.get(url, {
+            headers: {
+                'User-Agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            },
+        });
         const $ = cheerio.load(response.data);
 
         // Mencari URL video dari halaman Instagram
-        let videoUrl;
-
-        // Memeriksa jika URL adalah Instagram Reels
-        if (url.includes("/reel/")) {
-            videoUrl = $('meta[property="og:video"]').attr('content');
-        } else {
-            // Jika URL adalah post biasa
-            videoUrl = $('meta[property="og:video"]').attr('content');
-        }
+        const videoUrl = $('meta[property="og:video"]').attr('content');
 
         if (videoUrl) {
             res.json({ success: true, url: videoUrl });
         } else {
             res.status(400).json({ success: false, message: 'Video not found on Instagram.' });
         }
-
     } catch (error) {
         console.error('Error fetching Instagram video:', error);
         res.status(500).json({ success: false, message: 'Failed to fetch Instagram video.' });
