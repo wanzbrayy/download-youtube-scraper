@@ -6,7 +6,7 @@ const { youtubeSearch } = require('youtube-search-scraper');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const PORT = 8080;
 
 // Middleware untuk meng-handle JSON request
 app.use(bodyParser.json());
