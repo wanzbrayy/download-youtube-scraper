@@ -11,6 +11,7 @@ const PORT = 8080; // Port yang diminta
 
 // Middleware untuk meng-handle JSON request
 app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname)));
 
 // Serve the index.html file
 app.get('/', (req, res) => {
