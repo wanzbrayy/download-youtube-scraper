@@ -3,9 +3,15 @@ const bodyParser = require('body-parser');
 const ytdl = require('ytdl-core');
 const youtubeSearch = require('youtube-search-scraper');
 const axios = require('axios');
+const path = require('path');
 
 const app = express();
 app.use(bodyParser.json());
+
+// Route untuk menyajikan file index.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // Fetch YouTube video
 app.post('/fetch-youtube', async (req, res) => {
@@ -58,3 +64,4 @@ app.post('/fetch-instagram', async (req, res) => {
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+
