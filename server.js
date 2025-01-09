@@ -6,12 +6,12 @@ const { youtubeSearch } = require('youtube-search-scraper');
 const path = require('path');
 
 const app = express();
-const PORT = 8080;
+const PORT = 3000;
 
 // Middleware untuk meng-handle JSON request
 app.use(bodyParser.json());
 
-// Rute untuk melayani index.html
+// Serve the index.html file
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -58,11 +58,13 @@ app.post('/fetch-instagram', async (req, res) => {
     const { url } = req.body;
 
     try {
-        const apiUrl = `https://api.instagramdownloader.io/download?url=${encodeURIComponent(url)}`;
+        // Gunakan API untuk Instagram Downloader yang lebih umum
+        const apiUrl = `https://api.instagram.com/oembed?url=${encodeURIComponent(url)}`;
         const response = await axios.get(apiUrl);
 
-        if (response.data && response.data.downloadUrl) {
-            res.json({ success: true, url: response.data.downloadUrl });
+        if (response.data && response.data.thumbnail_url) {
+            const videoUrl = response.data.thumbnail_url.replace('http://', 'https://'); // Replace with HTTPS if needed
+            res.json({ success: true, url: videoUrl });
         } else {
             res.status(400).json({ success: false, message: 'Invalid Instagram URL or unable to fetch video.' });
         }
@@ -72,7 +74,7 @@ app.post('/fetch-instagram', async (req, res) => {
     }
 });
 
-// Menjalankan server pada port 3000
+// Start server
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });
