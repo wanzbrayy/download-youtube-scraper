@@ -3,179 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Media Downloader</title>
+    <title>Video Downloader</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
         }
-
-        h1 {
-            text-align: center;
+        .video-container {
             margin-top: 20px;
-        }
-
-        form {
-            margin: 20px auto;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        input, button {
-            padding: 10px;
-            font-size: 16px;
-        }
-
-        button {
-            cursor: pointer;
-            background: #4CAF50;
-            color: white;
-            border: none;
-        }
-
-        #result-card {
-            margin: 20px auto;
-            max-width: 600px;
             display: none;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-            animation: fadeIn 0.5s ease-in-out;
         }
-
-        #result-card video {
+        video {
             width: 100%;
-            height: auto;
+            max-width: 800px;
+            margin: 0 auto;
+            display: block;
         }
-
-        #resolutions {
-            padding: 10px;
-            background: #f9f9f9;
-            border-top: 1px solid #ddd;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        #resolutions button {
-            flex: 1;
-            padding: 10px;
-            background: #007BFF;
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #3498db;
             color: white;
             border: none;
-            border-radius: 5px;
             cursor: pointer;
         }
-
-        #resolutions button:hover {
-            background: #0056b3;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        button:hover {
+            background-color: #2980b9;
         }
     </style>
 </head>
 <body>
-    <h1>Media Downloader</h1>
 
-    <form id="youtube-form">
-        <input type="text" id="youtube-url" placeholder="Enter YouTube URL or keyword" required>
-        <button type="submit">Fetch YouTube Video</button>
-    </form>
+    <h1>Instagram & YouTube Video Downloader</h1>
+    
+    <div>
+        <input type="text" id="video-url" placeholder="Enter Instagram or YouTube URL" style="width: 80%; padding: 10px;">
+        <button onclick="fetchVideo()">Download Video</button>
+    </div>
 
-    <form id="instagram-form">
-        <input type="text" id="instagram-url" placeholder="Enter Instagram URL" required>
-        <button type="submit">Fetch Instagram Video</button>
-    </form>
-
-    <div id="result-card">
-        <video id="result-video" controls></video>
+    <div class="video-container" id="video-container">
+        <video id="video" controls></video>
         <div id="resolutions"></div>
     </div>
 
     <script>
-        // Helper to show result card
-        function showResult(videoUrl, formats) {
-            const resultCard = document.getElementById('result-card');
-            const resultVideo = document.getElementById('result-video');
-            const resolutions = document.getElementById('resolutions');
-
-            // Set video source
-            resultVideo.src = videoUrl;
-            resultCard.style.display = 'block';
-
-            // Populate resolutions
-            resolutions.innerHTML = '';
-            formats.forEach(format => {
-                const button = document.createElement('button');
-                button.textContent = format.qualityLabel;
-                button.onclick = () => {
-                    resultVideo.src = format.url;
-                    resultVideo.play();
-                };
-                resolutions.appendChild(button);
+        async function fetchVideo() {
+            const url = document.getElementById('video-url').value;
+            const response = await fetch('http://localhost:8080/fetch-instagram', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url })
             });
+
+            const data = await response.json();
+            if (data.success) {
+                const videoUrl = data.url;
+                document.getElementById('video').src = videoUrl;
+                document.getElementById('video-container').style.display = 'block';
+            } else {
+                alert(data.message);
+            }
         }
-
-        // Fetch YouTube Video
-        document.getElementById('youtube-form').addEventListener('submit', async (event) => {
-            event.preventDefault(); // Prevent page refresh
-            const url = document.getElementById('youtube-url').value;
-
-            try {
-                const response = await fetch('/fetch-youtube', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url })
-                });
-                const data = await response.json();
-
-                if (data.success) {
-                    showResult(data.defaultFormat.url, data.formats);
-                } else {
-                    alert(data.message);
-                }
-            } catch (error) {
-                console.error(error);
-                alert('Error fetching YouTube video.');
-            }
-        });
-
-        // Fetch Instagram Video
-        document.getElementById('instagram-form').addEventListener('submit', async (event) => {
-            event.preventDefault(); // Prevent page refresh
-            const url = document.getElementById('instagram-url').value;
-
-            try {
-                const response = await fetch('/fetch-instagram', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url })
-                });
-                const data = await response.json();
-
-                if (data.success) {
-                    showResult(data.url, []);
-                } else {
-                    alert(data.message);
-                }
-            } catch (error) {
-                console.error(error);
-                alert('Error fetching Instagram video.');
-            }
-        });
     </script>
+
 </body>
 </html>
