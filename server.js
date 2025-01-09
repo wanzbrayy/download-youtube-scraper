@@ -6,24 +6,24 @@ const { youtubeSearch } = require('youtube-search-scraper');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const PORT = 8080;
 
-// Middleware
+// Middleware untuk meng-handle JSON request
 app.use(bodyParser.json());
 
-// Serve the index.html file
+// Rute untuk melayani index.html
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Endpoint to fetch YouTube video
+// Endpoint untuk fetch video YouTube
 app.post('/fetch-youtube', async (req, res) => {
     const { url } = req.body;
 
     try {
         let videoInfo;
 
-        // Check if URL is a valid YouTube link or search term
+        // Cek apakah URL valid untuk YouTube
         if (ytdl.validateURL(url)) {
             videoInfo = await ytdl.getInfo(url);
         } else {
@@ -53,12 +53,11 @@ app.post('/fetch-youtube', async (req, res) => {
     }
 });
 
-// Endpoint to fetch Instagram video
+// Endpoint untuk fetch video Instagram
 app.post('/fetch-instagram', async (req, res) => {
     const { url } = req.body;
 
     try {
-        // Fetch Instagram video
         const apiUrl = `https://api.instagramdownloader.io/download?url=${encodeURIComponent(url)}`;
         const response = await axios.get(apiUrl);
 
@@ -73,7 +72,7 @@ app.post('/fetch-instagram', async (req, res) => {
     }
 });
 
-// Start server
+// Menjalankan server pada port 3000
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });
