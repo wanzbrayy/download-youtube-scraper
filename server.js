@@ -3,16 +3,16 @@ const bodyParser = require('body-parser');
 const axios = require('axios');
 const ytdl = require('ytdl-core');
 const { youtubeSearch } = require('youtube-search-scraper');
+const cheerio = require('cheerio');
 const path = require('path');
-const cheerio = require('cheerio'); // Untuk scraping HTML Instagram
 
 const app = express();
 const PORT = 8080;
 
-// Middleware untuk meng-handle JSON request
+// Middleware
 app.use(bodyParser.json());
 
-// Serve the index.html file
+// Serve index.html
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -23,8 +23,6 @@ app.post('/fetch-youtube', async (req, res) => {
 
     try {
         let videoInfo;
-
-        // Cek apakah URL valid untuk YouTube
         if (ytdl.validateURL(url)) {
             videoInfo = await ytdl.getInfo(url);
         } else {
@@ -45,8 +43,8 @@ app.post('/fetch-youtube', async (req, res) => {
 
         res.json({
             success: true,
-            defaultFormat: formats[0], // Default to the first format
-            formats, // List of all formats for resolution buttons
+            defaultFormat: formats[0],
+            formats,
         });
     } catch (error) {
         console.error(error);
@@ -54,7 +52,7 @@ app.post('/fetch-youtube', async (req, res) => {
     }
 });
 
-// Endpoint untuk fetch video Instagram dengan Web Scraping
+// Endpoint untuk fetch video Instagram
 app.post('/fetch-instagram', async (req, res) => {
     const { url } = req.body;
 
@@ -65,17 +63,16 @@ app.post('/fetch-instagram', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid Instagram URL.' });
         }
 
-        // Mengambil halaman Instagram
+        // Ambil halaman Instagram
         const response = await axios.get(url, {
             headers: {
-                'User-Agent':
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
             },
         });
-        const $ = cheerio.load(response.data);
 
-        // Mencari URL video dari halaman Instagram
-        const videoUrl = $('meta[property="og:video"]').attr('content');
+        // Parsing konten HTML
+        const $ = cheerio.load(response.data);
+        const videoUrl = $('meta[property="og:video"]').attr('content') || $('meta[name="twitter:player"]').attr('content');
 
         if (videoUrl) {
             res.json({ success: true, url: videoUrl });
@@ -83,7 +80,7 @@ app.post('/fetch-instagram', async (req, res) => {
             res.status(400).json({ success: false, message: 'Video not found on Instagram.' });
         }
     } catch (error) {
-        console.error('Error fetching Instagram video:', error);
+        console.error('Error fetching Instagram video:', error.message);
         res.status(500).json({ success: false, message: 'Failed to fetch Instagram video.' });
     }
 });
