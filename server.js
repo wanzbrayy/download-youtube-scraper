@@ -60,7 +60,7 @@ app.post('/fetch-instagram', async (req, res) => {
 
     try {
         // Validasi URL Instagram
-        const validInstagramUrl = /https:\/\/www.instagram.com\/p\/[A-Za-z0-9_-]+/;
+        const validInstagramUrl = /https:\/\/www.instagram.com\/(p|reel)\/[A-Za-z0-9_-]+/;
         if (!validInstagramUrl.test(url)) {
             return res.status(400).json({ success: false, message: 'Invalid Instagram URL.' });
         }
@@ -70,8 +70,16 @@ app.post('/fetch-instagram', async (req, res) => {
         const $ = cheerio.load(response.data);
 
         // Mencari URL video dari halaman Instagram
-        const videoUrl = $('meta[property="og:video"]').attr('content');
-        
+        let videoUrl;
+
+        // Memeriksa jika URL adalah Instagram Reels
+        if (url.includes("/reel/")) {
+            videoUrl = $('meta[property="og:video"]').attr('content');
+        } else {
+            // Jika URL adalah post biasa
+            videoUrl = $('meta[property="og:video"]').attr('content');
+        }
+
         if (videoUrl) {
             res.json({ success: true, url: videoUrl });
         } else {
