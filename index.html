@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Downloader</title>
+    <style>
+        /* Sidebar Style */
+        #sidebar {
+            position: fixed;
+            top: 0;
+            right: -250px;
+            width: 250px;
+            height: 100%;
+            background: #333;
+            color: white;
+            padding: 20px;
+            transition: right 0.3s;
+            z-index: 1000;
+        }
+
+        #sidebar.open {
+            right: 0;
+        }
+
+        #sidebar button {
+            background: #555;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        #menu-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            z-index: 1001;
+        }
+    </style>
+</head>
+<body>
+    <button id="menu-btn">Menu</button>
+    <div id="sidebar">
+        <button onclick="openSection('youtube')">YouTube Downloader</button>
+        <button onclick="openSection('instagram')">Instagram Downloader</button>
+        <button onclick="closeSidebar()">Close</button>
+    </div>
+
+    <h1>Media Downloader</h1>
+    <div id="youtube-section" style="display: none;">
+        <h2>YouTube Downloader</h2>
+        <form id="youtube-form">
+            <input type="text" id="youtube-url" placeholder="Enter YouTube URL or keyword" required>
+            <button type="submit">Fetch Video</button>
+        </form>
+        <div id="youtube-result"></div>
+    </div>
+
+    <div id="instagram-section" style="display: none;">
+        <h2>Instagram Downloader</h2>
+        <form id="instagram-form">
+            <input type="text" id="instagram-url" placeholder="Enter Instagram Post URL" required>
+            <button type="submit">Fetch Post</button>
+        </form>
+        <div id="instagram-result"></div>
+    </div>
+
+    <script>
+        // Sidebar functionality
+        const sidebar = document.getElementById('sidebar');
+        const menuBtn = document.getElementById('menu-btn');
+        menuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+        }
+
+        function openSection(section) {
+            document.getElementById('youtube-section').style.display = section === 'youtube' ? 'block' : 'none';
+            document.getElementById('instagram-section').style.display = section === 'instagram' ? 'block' : 'none';
+            closeSidebar();
+        }
+
+        // YouTube Downloader
+        document.getElementById('youtube-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const url = document.getElementById('youtube-url').value;
+            const resultDiv = document.getElementById('youtube-result');
+            resultDiv.innerHTML = 'Fetching video...';
+
+            try {
+                const response = await fetch('/fetch-youtube', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url }),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const videoHTML = `
+                        <h3>Playing Video:</h3>
+                        <video controls autoplay style="max-width: 100%; height: auto;">
+                            <source src="${data.defaultFormat.url}" type="video/mp4">
+                        </video>
+                    `;
+                    const resolutions = data.formats.map(format => `
+                        <button onclick="changeVideo('${format.url}', 'youtube')">
+                            ${format.qualityLabel} (${format.container})
+                        </button>
+                    `).join('');
+
+                    resultDiv.innerHTML = `${videoHTML}<h3>Select a resolution:</h3>${resolutions}`;
+                } else {
+                    resultDiv.innerHTML = `<p>${data.message}</p>`;
+                }
+            } catch (error) {
+                console.error(error);
+                resultDiv.innerHTML = '<p>An error occurred.</p>';
+            }
+        });
+
+        // Instagram Downloader
+        document.getElementById('instagram-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const url = document.getElementById('instagram-url').value;
+            const resultDiv = document.getElementById('instagram-result');
+            resultDiv.innerHTML = 'Fetching post...';
+
+            try {
+                const response = await fetch('/fetch-instagram', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url }),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <h3>Downloaded Post:</h3>
+                        <video controls autoplay style="max-width: 100%; height: auto;">
+                            <source src="${data.url}" type="video/mp4">
+                        </video>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p>${data.message}</p>`;
+                }
+            } catch (error) {
+                console.error(error);
+                resultDiv.innerHTML = '<p>An error occurred.</p>';
+            }
+        });
+
+        function changeVideo(url, platform) {
+            const resultDiv = platform === 'youtube' ? document.getElementById('youtube-result') : document.getElementById('instagram-result');
+            const videoTag = resultDiv.querySelector('video source');
+            videoTag.src = url;
+            const videoElement = resultDiv.querySelector('video');
+            videoElement.load();
+            videoElement.play();
+        }
+    </script>
+</body>
+</html>
