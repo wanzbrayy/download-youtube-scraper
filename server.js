@@ -1,80 +1,79 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const ytdl = require('ytdl-core');
-const youtubeSearch = require('youtube-search-scraper');
 const axios = require('axios');
+const ytdl = require('ytdl-core');
+const { youtubeSearch } = require('youtube-search-scraper');
 const path = require('path');
 
 const app = express();
+const PORT = 3000;
+
+// Middleware
 app.use(bodyParser.json());
 
-// Route untuk menyajikan file index.html
+// Serve the index.html file
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Fetch YouTube video
+// Endpoint to fetch YouTube video
 app.post('/fetch-youtube', async (req, res) => {
     const { url } = req.body;
 
     try {
-        // Jika URL valid
+        let videoInfo;
+
+        // Check if URL is a valid YouTube link or search term
         if (ytdl.validateURL(url)) {
-            const videoInfo = await ytdl.getInfo(url);
-            const formats = videoInfo.formats
-                .filter(f => f.container === 'mp4' && f.hasVideo && f.hasAudio)
-                .map(f => ({
-                    qualityLabel: f.qualityLabel || 'Unknown Quality',
-                    container: f.container,
-                    url: f.url,
-                }));
-
-            const defaultFormat = formats[0];
-            return res.json({ success: true, defaultFormat, formats });
+            videoInfo = await ytdl.getInfo(url);
+        } else {
+            const searchResults = await youtubeSearch(url);
+            if (searchResults.length > 0) {
+                videoInfo = await ytdl.getInfo(searchResults[0].url);
+            } else {
+                return res.status(400).json({ success: false, message: 'No YouTube videos found for the given keyword.' });
+            }
         }
 
-        // Jika input adalah kata kunci pencarian
-        const searchResults = await youtubeSearch.search(url);
-        if (searchResults && searchResults.length > 0) {
-            return res.json({ success: true, searchResults });
-        }
+        const formats = videoInfo.formats
+            .filter(format => format.hasVideo && format.hasAudio)
+            .map(format => ({
+                url: format.url,
+                qualityLabel: format.qualityLabel || 'Unknown Quality',
+            }));
 
-        res.json({ success: false, message: 'Invalid YouTube URL or keyword.' });
+        res.json({
+            success: true,
+            defaultFormat: formats[0], // Default to the first format
+            formats, // List of all formats for resolution buttons
+        });
     } catch (error) {
         console.error(error);
-        res.json({ success: false, message: 'Error fetching YouTube video.' });
+        res.status(500).json({ success: false, message: 'Failed to fetch YouTube video.' });
     }
 });
 
-// Fetch Instagram video
+// Endpoint to fetch Instagram video
 app.post('/fetch-instagram', async (req, res) => {
     const { url } = req.body;
 
     try {
-        // Periksa apakah URL valid
-        const regex = /(https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/[A-Za-z0-9_-]+)/;
-        const match = url.match(regex);
+        // Fetch Instagram video
+        const apiUrl = `https://api.instagramdownloader.io/download?url=${encodeURIComponent(url)}`;
+        const response = await axios.get(apiUrl);
 
-        if (!match) {
-            return res.json({ success: false, message: 'Invalid Instagram URL.' });
+        if (response.data && response.data.downloadUrl) {
+            res.json({ success: true, url: response.data.downloadUrl });
+        } else {
+            res.status(400).json({ success: false, message: 'Invalid Instagram URL or unable to fetch video.' });
         }
-
-        const response = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        const videoUrlMatch = response.data.match(/"video_url":"(.*?)"/);
-
-        if (videoUrlMatch && videoUrlMatch[1]) {
-            const videoUrl = videoUrlMatch[1].replace(/\\u0026/g, '&');
-            return res.json({ success: true, url: videoUrl });
-        }
-
-        res.json({ success: false, message: 'No video found in this Instagram post.' });
     } catch (error) {
         console.error(error);
-        res.json({ success: false, message: 'Error fetching Instagram post.' });
+        res.status(500).json({ success: false, message: 'Failed to fetch Instagram video.' });
     }
 });
 
 // Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
-                
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+});
