@@ -1,148 +1,233 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Downloader</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        .input-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        input {
-            width: 80%;
-            padding: 10px;
-            font-size: 16px;
-            margin-right: 10px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        .video-container {
-            margin-top: 20px;
-            display: none;
-            text-align: center;
-        }
-        .video-container video {
-            width: 100%;
-            max-width: 800px;
-            display: block;
-            margin: 0 auto;
-        }
-        .spinner {
-            border: 16px solid #f3f3f3;
-            border-top: 16px solid #3498db;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 2s linear infinite;
-            margin: 0 auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .error-message {
-            color: red;
-            text-align: center;
-            margin-top: 20px;
-            font-size: 18px;
-            display: none;
-        }
-        .success-message {
-            color: green;
-            text-align: center;
-            margin-top: 20px;
-            font-size: 18px;
-            display: none;
-        }
-        @media (max-width: 600px) {
-            input {
-                width: 70%;
-            }
-            button {
-                width: 60%;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Downloader</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background-color: #f4f4f9;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    #form-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #error-message {
+      color: red;
+      font-size: 14px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    #loading {
+      display: none;
+      margin-top: 20px;
+    }
+
+    #loading span {
+      display: block;
+      font-size: 16px;
+      color: #007bff;
+    }
+
+    #video-container {
+      margin-top: 20px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    video {
+      width: 100%;
+      max-width: 500px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+    }
+
+    select {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    /* Sidebar */
+    #sidebar {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      background-color: #007bff;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    #sidebar-content {
+      position: absolute;
+      top: 70px;
+      right: 20px;
+      background-color: white;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      display: none;
+      padding: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    #sidebar-content a {
+      display: block;
+      text-decoration: none;
+      color: #333;
+      padding: 5px 0;
+    }
+
+    #sidebar-content a:hover {
+      color: #007bff;
+    }
+  </style>
 </head>
 <body>
-
-    <h1>Instagram & YouTube Video Downloader</h1>
-    
-    <div class="input-container">
-        <input type="text" id="video-url" placeholder="Enter Instagram or YouTube URL">
-        <button onclick="fetchVideo()">Download Video</button>
+  <h1>Video Downloader</h1>
+  <div id="form-container">
+    <input type="text" id="video-url" placeholder="Enter YouTube or Instagram URL">
+    <button id="fetch-video">Download Video</button>
+    <div id="error-message">Error fetching video, please try again.</div>
+    <div id="loading">
+      <span>Loading...</span>
     </div>
+  </div>
+  <div id="video-container">
+    <video controls id="video-player"></video>
+    <select id="video-resolutions"></select>
+  </div>
 
-    <div id="loading-spinner" class="spinner" style="display: none;"></div>
+  <!-- Sidebar -->
+  <div id="sidebar">☰</div>
+  <div id="sidebar-content">
+    <a href="#">Home</a>
+    <a href="#">About</a>
+    <a href="#">Contact</a>
+  </div>
 
-    <div class="video-container" id="video-container">
-        <video id="video" controls></video>
-        <div id="resolutions"></div>
-    </div>
+  <script>
+    // Sidebar toggle
+    const sidebar = document.getElementById("sidebar");
+    const sidebarContent = document.getElementById("sidebar-content");
 
-    <div class="error-message" id="error-message"></div>
-    <div class="success-message" id="success-message"></div>
+    sidebar.addEventListener("click", () => {
+      sidebarContent.style.display =
+        sidebarContent.style.display === "block" ? "none" : "block";
+    });
 
-    <script>
-        async function fetchVideo() {
-            const url = document.getElementById('video-url').value;
+    // Fetch video
+    document.getElementById("fetch-video").addEventListener("click", async () => {
+      const url = document.getElementById("video-url").value;
+      const errorMessage = document.getElementById("error-message");
+      const loading = document.getElementById("loading");
+      const videoContainer = document.getElementById("video-container");
+      const videoPlayer = document.getElementById("video-player");
+      const videoResolutions = document.getElementById("video-resolutions");
 
-            // Menampilkan loading spinner
-            document.getElementById('loading-spinner').style.display = 'block';
-            document.getElementById('error-message').style.display = 'none';
-            document.getElementById('success-message').style.display = 'none';
-            document.getElementById('video-container').style.display = 'none';
+      errorMessage.style.display = "none";
+      videoContainer.style.display = "none";
+      loading.style.display = "block";
 
-            try {
-                const response = await fetch('http://localhost:8080/fetch-instagram', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ url })
-                });
+      try {
+        let endpoint = url.includes("instagram.com")
+          ? "/fetch-instagram"
+          : "/fetch-youtube";
 
-                const data = await response.json();
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
 
-                // Menyembunyikan loading spinner setelah proses selesai
-                document.getElementById('loading-spinner').style.display = 'none';
+        const data = await response.json();
+        loading.style.display = "none";
 
-                if (data.success) {
-                    const videoUrl = data.url;
-                    document.getElementById('video').src = videoUrl;
-                    document.getElementById('video-container').style.display = 'block';
-                    document.getElementById('success-message').textContent = 'Video successfully fetched!';
-                    document.getElementById('success-message').style.display = 'block';
-                } else {
-                    document.getElementById('error-message').textContent = data.message;
-                    document.getElementById('error-message').style.display = 'block';
-                }
-            } catch (error) {
-                // Menyembunyikan loading spinner jika terjadi error
-                document.getElementById('loading-spinner').style.display = 'none';
-                document.getElementById('error-message').textContent = 'Error fetching video, please try again.';
-                document.getElementById('error-message').style.display = 'block';
-            }
+        if (data.success) {
+          if (data.url) {
+            // Instagram
+            videoContainer.style.display = "flex";
+            videoPlayer.src = data.url;
+            videoResolutions.style.display = "none";
+          } else if (data.formats) {
+            // YouTube
+            videoContainer.style.display = "flex";
+            videoPlayer.src = data.defaultFormat.url;
+
+            // Populate resolutions
+            videoResolutions.style.display = "block";
+            videoResolutions.innerHTML = data.formats
+              .map(
+                (format) =>
+                  `<option value="${format.url}">${format.qualityLabel}</option>`
+              )
+              .join("");
+
+            videoResolutions.addEventListener("change", (e) => {
+              videoPlayer.src = e.target.value;
+            });
+          }
+        } else {
+          errorMessage.textContent = data.message || "Error fetching video.";
+          errorMessage.style.display = "block";
         }
-    </script>
-
+      } catch (error) {
+        console.error(error);
+        loading.style.display = "none";
+        errorMessage.textContent = "Error fetching video, please try again.";
+        errorMessage.style.display = "block";
+      }
+    });
+  </script>
 </body>
 </html>
+
